@@ -1,13 +1,15 @@
-# TF-IDF + Logistic Regression. The grid is searched on the validation split.
+# TF-IDF + Logistic Regression. Every (C, class_weight) pair is trained on train and
+# scored on the validation split; the best by val F1 (sarcastic) is kept.
 vectorizer:
-  ngram_range: [1, 2]
+  ngram_range: [1, 2]   # word unigrams + bigrams
   lowercase: true
-  min_df: 2
-  sublinear_tf: true
+  min_df: 2             # ignore n-grams seen in only one training tweet
+  sublinear_tf: true    # 1 + log(tf)
 
 grid:
-  C: [0.01, 0.1, 1.0, 10.0, 100.0]
-  class_weight: [null, balanced]
+  C: [0.01, 0.1, 1.0, 10.0, 100.0]   # inverse regularization strength (L2)
+  class_weight: [null, balanced]     # null = no reweighting
 
+threshold: 0.5        # fixed decision threshold on P(sarcastic); not tuned
 max_iter: 2000
 top_k_features: 20

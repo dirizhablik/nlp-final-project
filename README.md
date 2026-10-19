@@ -168,6 +168,8 @@ Each run writes two files to `results/<model>/`:
 | Reference point | val F1 (sarcastic) | test F1 (sarcastic) |
 |---|---|---|
 | Always predict sarcastic | 0.3988 | 0.2500 |
+| Rule-based cues (sarcastic if at least 1 cue fires; preliminary) | 0.3518 | 0.2985 |
+| TF-IDF + LR (C=1, balanced; preliminary) | 0.3602 | 0.2853 |
 | Human majority vote (from the EDA notebook) | – | 0.6133 |
 
 The baseline scores higher on val than on test only because val has more sarcastic tweets

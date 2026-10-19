@@ -40,6 +40,10 @@ class SarcasmModel(ABC):
         """Return binary labels (1 = sarcastic) by thresholding the scores."""
         return (self.predict_scores(texts) >= self.threshold).astype(int)
 
+    def report(self) -> dict[str, Any]:
+        """Extra model details to store with the results (best config, top features, ...)."""
+        return {}
+
     @abstractmethod
     def size(self) -> dict[str, int]:
         """Report model size for the efficiency comparison, e.g. {"n_parameters": ...}."""

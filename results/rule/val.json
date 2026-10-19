@@ -1,0 +1,153 @@
+{
+  "model": "rule",
+  "split": "val",
+  "metrics": {
+    "f1_sarcastic": 0.35180722891566263,
+    "precision_sarcastic": 0.25524475524475526,
+    "recall_sarcastic": 0.5658914728682171,
+    "accuracy": 0.4806949806949807,
+    "f1_macro": 0.45931746308907123,
+    "confusion_matrix": [
+      [
+        176,
+        213
+      ],
+      [
+        56,
+        73
+      ]
+    ],
+    "n": 518,
+    "n_true_sarcastic": 129,
+    "n_pred_sarcastic": 286
+  },
+  "seed": 42,
+  "train_seconds": 1.637404292006977,
+  "inference_seconds": 0.0445670000044629,
+  "n_cues": 7,
+  "n_parameters": 1,
+  "model_report": {
+    "threshold": 0.25,
+    "cue_weights": {
+      "sentiment_contrast": 1.0,
+      "intensifier": 1.0,
+      "exaggeration": 1.0,
+      "interjection": 1.0,
+      "punctuation": 1.0,
+      "all_caps": 1.0,
+      "quotes": 1.0
+    },
+    "threshold_results": [
+      {
+        "threshold": 0.25,
+        "val_f1_sarcastic": 0.35180722891566263
+      },
+      {
+        "threshold": 0.5,
+        "val_f1_sarcastic": 0.35180722891566263
+      },
+      {
+        "threshold": 0.75,
+        "val_f1_sarcastic": 0.35180722891566263
+      },
+      {
+        "threshold": 1.0,
+        "val_f1_sarcastic": 0.35180722891566263
+      },
+      {
+        "threshold": 1.25,
+        "val_f1_sarcastic": 0.21100917431192662
+      },
+      {
+        "threshold": 1.5,
+        "val_f1_sarcastic": 0.21100917431192662
+      },
+      {
+        "threshold": 1.75,
+        "val_f1_sarcastic": 0.21100917431192662
+      },
+      {
+        "threshold": 2.0,
+        "val_f1_sarcastic": 0.21100917431192662
+      },
+      {
+        "threshold": 2.25,
+        "val_f1_sarcastic": 0.08
+      },
+      {
+        "threshold": 2.5,
+        "val_f1_sarcastic": 0.08
+      },
+      {
+        "threshold": 2.75,
+        "val_f1_sarcastic": 0.08
+      },
+      {
+        "threshold": 3.0,
+        "val_f1_sarcastic": 0.08
+      },
+      {
+        "threshold": 3.25,
+        "val_f1_sarcastic": 0.015037593984962405
+      },
+      {
+        "threshold": 3.5,
+        "val_f1_sarcastic": 0.015037593984962405
+      },
+      {
+        "threshold": 3.75,
+        "val_f1_sarcastic": 0.015037593984962405
+      },
+      {
+        "threshold": 4.0,
+        "val_f1_sarcastic": 0.015037593984962405
+      },
+      {
+        "threshold": 4.25,
+        "val_f1_sarcastic": 0.0
+      },
+      {
+        "threshold": 4.5,
+        "val_f1_sarcastic": 0.0
+      },
+      {
+        "threshold": 4.75,
+        "val_f1_sarcastic": 0.0
+      },
+      {
+        "threshold": 5.0,
+        "val_f1_sarcastic": 0.0
+      }
+    ],
+    "train_cue_rates": {
+      "sentiment_contrast": {
+        "non_sarcastic": 0.1491587085038654,
+        "sarcastic": 0.18963165075034105
+      },
+      "intensifier": {
+        "non_sarcastic": 0.2214643019554343,
+        "sarcastic": 0.18281036834924966
+      },
+      "exaggeration": {
+        "non_sarcastic": 0.1432469304229195,
+        "sarcastic": 0.1296043656207367
+      },
+      "interjection": {
+        "non_sarcastic": 0.015006821282401092,
+        "sarcastic": 0.040927694406548434
+      },
+      "punctuation": {
+        "non_sarcastic": 0.06866757617098682,
+        "sarcastic": 0.09140518417462483
+      },
+      "all_caps": {
+        "non_sarcastic": 0.13824465666211916,
+        "sarcastic": 0.09549795361527967
+      },
+      "quotes": {
+        "non_sarcastic": 0.061391541609822645,
+        "sarcastic": 0.08049113233287858
+      }
+    }
+  }
+}
