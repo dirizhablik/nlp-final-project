@@ -17,8 +17,8 @@ with human annotators, and error analysis.
 **Primary metric:** F1 on the sarcastic class (`f1_score(..., average="binary", pos_label=1)`),
 as defined by the shared task. We also report precision, recall, accuracy and the confusion matrix.
 
-> **Status:** the repo scaffold and environment setup are done. The data module, models and
-> evaluation are being added in follow-up PRs, and this README is updated as each one lands.
+> **Status:** the scaffold, EDA notebook and data pipeline (`src/data.py`) are done. The models
+> and evaluation are being added in follow-up PRs, and this README is updated as each one lands.
 
 ## Setup
 
@@ -40,7 +40,7 @@ python3.12 -m venv .venv && source .venv/bin/activate
 pip install -r requirements-dev.txt
 ```
 
-On **Google Colab**, open the notebook in `notebooks/` (added together with the RoBERTa model).
+On **Google Colab**, use the RoBERTa notebook (added together with the RoBERTa model).
 It installs everything except `torch`, which Colab already provides.
 
 ## Data
@@ -60,6 +60,44 @@ redistributed under the dataset's MIT license (see `data/raw/LICENSE`) and were 
 Processed splits (`data/processed/`) are committed too, so all three of us use the exact same
 split. Model checkpoints are gitignored and must **not** be committed because they're too large.
 
+### Exploratory analysis
+
+`notebooks/01_eda.ipynb` explores the raw data and motivates every cleaning decision. Its
+last section is a summary table of findings and decisions. The notebook is committed with
+its outputs, so you can read it on GitHub without running it. To re-run it:
+
+```bash
+jupyter lab notebooks/01_eda.ipynb      # or: jupyter nbconvert --execute --inplace --to notebook notebooks/01_eda.ipynb
+```
+
+The notebook only reads `data/raw/`. The decisions themselves are implemented in `src/data.py`.
+
+### Processed splits
+
+`python -m src.data` builds `data/processed/{train,val,test}.csv` (columns `id, text, label,
+rephrase`) and `stats.json`. The result is deterministic, so re-running it produces identical
+files. In order, it:
+
+1. drops the one empty tweet;
+2. unescapes HTML entities and replaces URLs with `<URL>` and @mentions with `<USER>`, without
+   changing case, punctuation or emoji (the options live in `configs/base.yaml` under `cleaning`);
+3. drops all 12 rows of the 5 duplicate texts with conflicting labels, and keeps one copy of
+   each other duplicate. One pair becomes identical only after URL masking, so 5 copies are
+   dropped rather than the 4 the EDA counted;
+4. splits train 85/15 into train/val, stratified by label (seed 42), keeping identical texts on
+   the same side;
+5. checks for leakage, and fails if a val/test text or val rephrasing appears in training data.
+
+| Split | Rows | Sarcastic |
+|---|---|---|
+| train | 2,932 | 733 (25.0%) |
+| val | 518 | 129 (24.9%) |
+| test | 1,400 | 200 (14.3%) |
+
+The test set is cleaned the same way, but no rows are removed. `stats.json` records the cleaning
+counts, length statistics and a hash of each split's ids, so you can quickly confirm everyone
+has the same split.
+
 ## Repository layout
 
 | Path | What it is |
@@ -76,6 +114,7 @@ split. Model checkpoints are gitignored and must **not** be committed because th
 | `src/experiments/` | `rephrase.py`, `human_comparison.py` |
 | `src/analysis/` | `plots.py`, `results_table.py` |
 | `configs/base.yaml` | Seed, paths, split size |
+| `notebooks/` | `01_eda.ipynb`: exploratory data analysis (read-only on `data/raw/`) |
 | `tests/` | pytest suite |
 | `data/raw/`, `data/processed/` | Dataset and our fixed split (committed) |
 | `results/` | Metrics JSON + prediction CSVs per model/split (committed) |
@@ -105,7 +144,7 @@ To add a model: subclass `SarcasmModel`, add one line to the registry, and add `
 
 ## Reproducing results
 
-These commands are filled in as each component lands:
+`python -m src.data` works now. The model commands start working as each model lands:
 
 ```bash
 python -m src.data                                # build data/processed/ splits + stats

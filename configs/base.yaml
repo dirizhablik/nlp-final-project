@@ -8,4 +8,11 @@ paths:
   checkpoints_dir: checkpoints
 
 split:
-  val_size: 0.15   # stratified, duplicate-text-aware train/val split of the official train file
+  val_size: 0.15   # stratified train/val split of the official train file
+
+# Light cleaning only (see notebooks/01_eda.ipynb, section 12). Case, punctuation and
+# emoji are always kept because they are possible sarcasm cues.
+cleaning:
+  unescape_html: true   # &amp; -> &
+  mask_urls: true       # https://... -> <URL>   (common in train, absent from test)
+  mask_mentions: true   # @handle -> <USER>      (common in train, absent from test)
