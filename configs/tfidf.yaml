@@ -1,0 +1,13 @@
+# TF-IDF + Logistic Regression. The grid is searched on the validation split.
+vectorizer:
+  ngram_range: [1, 2]
+  lowercase: true
+  min_df: 2
+  sublinear_tf: true
+
+grid:
+  C: [0.01, 0.1, 1.0, 10.0, 100.0]
+  class_weight: [null, balanced]
+
+max_iter: 2000
+top_k_features: 20

@@ -1,0 +1,38 @@
+# --- Model weights / training artifacts ---
+checkpoints/
+*.pt
+*.pth
+*.bin
+*.safetensors
+*.ckpt
+runs/
+wandb/
+lightning_logs/
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+
+# --- Environments ---
+.venv/
+venv/
+env/
+.env
+
+# --- Tool caches ---
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+.cache/
+.ipynb_checkpoints/
+
+# --- OS / editors ---
+.DS_Store
+.idea/
+.vscode/
+*.swp

@@ -1,0 +1,9 @@
+# Fine-tuned roberta-base. The best epoch is chosen by validation F1 (sarcastic).
+pretrained: roberta-base
+max_len: 128
+batch_size: 16
+lr: 2.0e-5
+epochs: 4
+weight_decay: 0.01
+warmup_ratio: 0.1
+loss_weighting: [none, balanced]   # both are trained and compared on validation

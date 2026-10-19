@@ -1,0 +1,14 @@
+# Rule-based cue model. The decision threshold is tuned on validation.
+cue_weights:
+  sentiment_contrast: 1.0
+  intensifier: 1.0
+  interjection: 1.0
+  exaggeration: 1.0
+  punctuation: 1.0
+  all_caps: 1.0
+  quotes: 1.0
+
+threshold_search:   # candidate thresholds tried on validation
+  min: 0.0
+  max: 5.0
+  step: 0.25

@@ -1,0 +1,11 @@
+# Shared settings used by every model. Model-specific configs live next to this file.
+seed: 42
+
+paths:
+  raw_dir: data/raw
+  processed_dir: data/processed
+  results_dir: results
+  checkpoints_dir: checkpoints
+
+split:
+  val_size: 0.15   # stratified, duplicate-text-aware train/val split of the official train file
