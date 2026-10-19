@@ -7,6 +7,7 @@ from importlib import import_module
 from src.models.base import SarcasmModel
 
 _REGISTRY: dict[str, str] = {
+    "always_sarcastic": "src.models.baseline:AlwaysSarcasticModel",
     "rule": "src.models.rule_based:RuleBasedModel",
     "tfidf": "src.models.tfidf_lr:TfidfLRModel",
     "roberta": "src.models.roberta:RobertaModel",

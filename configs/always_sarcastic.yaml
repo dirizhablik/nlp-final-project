@@ -1,0 +1,2 @@
+# Trivial baseline: predicts "sarcastic" for every text. It has no hyperparameters.
+{}

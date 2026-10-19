@@ -17,8 +17,9 @@ with human annotators, and error analysis.
 **Primary metric:** F1 on the sarcastic class (`f1_score(..., average="binary", pos_label=1)`),
 as defined by the shared task. We also report precision, recall, accuracy and the confusion matrix.
 
-> **Status:** the scaffold, EDA notebook and data pipeline (`src/data.py`) are done. The models
-> and evaluation are being added in follow-up PRs, and this README is updated as each one lands.
+> **Status:** the scaffold, EDA notebook, data pipeline (`src/data.py`), shared evaluation
+> (`src/evaluate.py`) and the always-sarcastic baseline are done. The three models are being
+> added in follow-up PRs, and this README is updated as each one lands.
 
 ## Setup
 
@@ -103,6 +104,7 @@ has the same split.
 | Path | What it is |
 |---|---|
 | `src/models/base.py` | `SarcasmModel` abstract base class: the interface every model implements |
+| `src/models/baseline.py` + `configs/always_sarcastic.yaml` | Always-sarcastic reference baseline |
 | `src/models/__init__.py` | Model registry (`rule`, `tfidf`, `roberta`), lazily imported |
 | `src/models/rule_based.py` + `configs/rule.yaml` | Rule-based cue model |
 | `src/models/tfidf_lr.py` + `configs/tfidf.yaml` | TF-IDF + Logistic Regression |
@@ -144,16 +146,32 @@ To add a model: subclass `SarcasmModel`, add one line to the registry, and add `
 
 ## Reproducing results
 
-`python -m src.data` works now. The model commands start working as each model lands:
+The data and baseline commands work now. The other model commands start working as each model
+lands:
 
 ```bash
 python -m src.data                                # build data/processed/ splits + stats
+python -m src.run --model always_sarcastic --split val
+python -m src.run --model always_sarcastic --split test
 python -m src.run --model rule   --split val
 python -m src.run --model tfidf  --split val
 python -m src.run --model roberta --split val
 python -m src.run --model <name> --split test     # once per final config
 python -m src.analysis.results_table
 ```
+
+Each run writes two files to `results/<model>/`:
+- `<split>.json` holds the metrics (F1, precision and recall for the sarcastic class, accuracy,
+  macro-F1, the confusion matrix as `[[TN, FP], [FN, TP]]`), timings and model size.
+- `<split>_predictions.csv` holds one row per text: `id, text, label, pred, score`.
+
+| Reference point | val F1 (sarcastic) | test F1 (sarcastic) |
+|---|---|---|
+| Always predict sarcastic | 0.3988 | 0.2500 |
+| Human majority vote (from the EDA notebook) | – | 0.6133 |
+
+The baseline scores higher on val than on test only because val has more sarcastic tweets
+(24.9% vs 14.3%). So compare models on the same split, never val against test.
 
 ### Experimental protocol
 

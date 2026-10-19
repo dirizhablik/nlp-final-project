@@ -1,0 +1,28 @@
+{
+  "model": "always_sarcastic",
+  "split": "val",
+  "metrics": {
+    "f1_sarcastic": 0.3987635239567233,
+    "precision_sarcastic": 0.24903474903474904,
+    "recall_sarcastic": 1.0,
+    "accuracy": 0.24903474903474904,
+    "f1_macro": 0.19938176197836166,
+    "confusion_matrix": [
+      [
+        0,
+        389
+      ],
+      [
+        0,
+        129
+      ]
+    ],
+    "n": 518,
+    "n_true_sarcastic": 129,
+    "n_pred_sarcastic": 518
+  },
+  "seed": 42,
+  "train_seconds": 6.25033862888813e-07,
+  "inference_seconds": 1.2209056876599789e-05,
+  "n_parameters": 0
+}
