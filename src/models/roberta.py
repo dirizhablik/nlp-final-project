@@ -10,7 +10,6 @@ CUDA, MPS or CPU via ``src.utils.get_device``; checkpoints go to checkpoints/.
 from __future__ import annotations
 
 from collections.abc import Sequence
-from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -32,9 +31,4 @@ class RobertaModel(SarcasmModel):
     def size(self) -> dict[str, int]:
         raise NotImplementedError
 
-    def save(self, directory: Path) -> None:
-        raise NotImplementedError
-
-    @classmethod
-    def load(cls, directory: Path) -> RobertaModel:
-        raise NotImplementedError
+    # TODO: extend save/load (like TfidfLRModel) to also write/read the fine-tuned weights.

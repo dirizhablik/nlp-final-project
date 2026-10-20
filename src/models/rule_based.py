@@ -20,11 +20,9 @@ Cues:
 
 from __future__ import annotations
 
-import json
 import logging
 import re
 from collections.abc import Callable, Sequence
-from pathlib import Path
 from typing import Any
 
 import numpy as np
@@ -32,7 +30,7 @@ import pandas as pd
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 
 from src.data import URL_TOKEN, USER_TOKEN
-from src.evaluate import compute_metrics
+from src.evaluate import f1_sarcastic
 from src.models.base import SarcasmModel
 
 logger = logging.getLogger(__name__)
@@ -108,6 +106,7 @@ class RuleBasedModel(SarcasmModel):
     """Weighted sum of sarcasm cues, thresholded on validation."""
 
     name = "rule"
+    state_attrs = ("threshold_results", "train_cue_rates")
 
     def __init__(self, config: dict[str, Any], seed: int) -> None:
         super().__init__(config, seed)
@@ -129,7 +128,7 @@ class RuleBasedModel(SarcasmModel):
         y_val = val["label"].to_numpy()
         self.threshold_results = []
         for t in self._candidate_thresholds():
-            f1 = compute_metrics(y_val, (val_scores >= t).astype(int))["f1_sarcastic"]
+            f1 = f1_sarcastic(y_val, val_scores >= t)
             self.threshold_results.append({"threshold": t, "val_f1_sarcastic": f1})
         best = max(self.threshold_results, key=lambda r: r["val_f1_sarcastic"])  # first max wins
         self.threshold = best["threshold"]
@@ -185,23 +184,3 @@ class RuleBasedModel(SarcasmModel):
     def size(self) -> dict[str, int]:
         # The weights are fixed by hand; the threshold is the only tuned parameter.
         return {"n_cues": len(self.weights), "n_parameters": 1}
-
-    def save(self, directory: Path) -> None:
-        directory.mkdir(parents=True, exist_ok=True)
-        state = {
-            "config": self.config,
-            "seed": self.seed,
-            "threshold": self.threshold,
-            "threshold_results": self.threshold_results,
-            "train_cue_rates": self.train_cue_rates,
-        }
-        (directory / "state.json").write_text(json.dumps(state, indent=2), encoding="utf-8")
-
-    @classmethod
-    def load(cls, directory: Path) -> RuleBasedModel:
-        state = json.loads((directory / "state.json").read_text(encoding="utf-8"))
-        model = cls(state["config"], seed=state["seed"])
-        model.threshold = state["threshold"]
-        model.threshold_results = state["threshold_results"]
-        model.train_cue_rates = state["train_cue_rates"]
-        return model

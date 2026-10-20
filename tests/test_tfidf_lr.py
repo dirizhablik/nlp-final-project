@@ -8,21 +8,11 @@ import pytest
 
 from src.models.tfidf_lr import TfidfLRModel
 from src.utils import load_config
+from tests.helpers import frame
 
 # "love mondays" only ever appears in sarcastic tweets, "nice weather" only in plain ones.
 SARCASTIC = ["oh i love mondays so much", "love mondays again", "wow love mondays truly"]
 PLAIN = ["nice weather today", "the weather is nice", "nice weather for a walk", "lunch was ok"]
-
-
-def frame(texts: list[str], labels: list[int]) -> pd.DataFrame:
-    return pd.DataFrame(
-        {
-            "id": [f"x-{i}" for i in range(len(texts))],
-            "text": texts,
-            "label": labels,
-            "rephrase": [""] * len(texts),
-        }
-    )
 
 
 @pytest.fixture

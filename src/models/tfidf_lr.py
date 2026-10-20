@@ -14,13 +14,11 @@ not features, and the masks ``<USER>``/``<URL>`` become the words "user"/"url".
 
 from __future__ import annotations
 
-import json
 import logging
-import time
 from collections.abc import Sequence
 from itertools import product
 from pathlib import Path
-from typing import Any
+from typing import Any, Self
 
 import joblib
 import numpy as np
@@ -29,16 +27,19 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import LogisticRegression
 from sklearn.pipeline import Pipeline
 
-from src.evaluate import compute_metrics
+from src.evaluate import Timer, f1_sarcastic
 from src.models.base import SarcasmModel
 
 logger = logging.getLogger(__name__)
+
+PIPELINE_FILE = "pipeline.joblib"
 
 
 class TfidfLRModel(SarcasmModel):
     """Logistic Regression over TF-IDF features, tuned on validation."""
 
     name = "tfidf"
+    state_attrs = ("best_params", "grid_results")
 
     def __init__(self, config: dict[str, Any], seed: int) -> None:
         super().__init__(config, seed)
@@ -56,7 +57,7 @@ class TfidfLRModel(SarcasmModel):
         for c, class_weight in product(grid["C"], grid["class_weight"]):
             pipeline, seconds = self._fit_one(train, c, class_weight)
             val_pred = pipeline.predict_proba(val["text"].tolist())[:, 1] >= self.threshold
-            f1 = compute_metrics(val["label"].to_numpy(), val_pred.astype(int))["f1_sarcastic"]
+            f1 = f1_sarcastic(val["label"].to_numpy(), val_pred)
             self.grid_results.append(
                 {
                     "C": c,
@@ -89,9 +90,9 @@ class TfidfLRModel(SarcasmModel):
                 ),
             ]
         )
-        start = time.perf_counter()
-        pipeline.fit(train["text"].tolist(), train["label"].to_numpy())
-        return pipeline, time.perf_counter() - start
+        with Timer() as timer:
+            pipeline.fit(train["text"].tolist(), train["label"].to_numpy())
+        return pipeline, timer.seconds
 
     def _vectorizer_params(self) -> dict[str, Any]:
         params = dict(self.config["vectorizer"])
@@ -139,23 +140,11 @@ class TfidfLRModel(SarcasmModel):
     # --- persistence ---------------------------------------------------------
 
     def save(self, directory: Path) -> None:
-        directory.mkdir(parents=True, exist_ok=True)
-        joblib.dump(self._fitted(), directory / "pipeline.joblib")
-        state = {
-            "config": self.config,
-            "seed": self.seed,
-            "threshold": self.threshold,
-            "best_params": self.best_params,
-            "grid_results": self.grid_results,
-        }
-        (directory / "state.json").write_text(json.dumps(state, indent=2), encoding="utf-8")
+        super().save(directory)
+        joblib.dump(self._fitted(), directory / PIPELINE_FILE)
 
     @classmethod
-    def load(cls, directory: Path) -> TfidfLRModel:
-        state = json.loads((directory / "state.json").read_text(encoding="utf-8"))
-        model = cls(state["config"], seed=state["seed"])
-        model.threshold = state["threshold"]
-        model.best_params = state["best_params"]
-        model.grid_results = state["grid_results"]
-        model.pipeline = joblib.load(directory / "pipeline.joblib")
+    def load(cls, directory: Path) -> Self:
+        model = super().load(directory)
+        model.pipeline = joblib.load(directory / PIPELINE_FILE)
         return model
