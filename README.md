@@ -124,17 +124,23 @@ has the same split.
 
 ### How the pieces fit
 
-Every model subclasses `SarcasmModel` and implements five methods:
+Every model subclasses `SarcasmModel` and implements three methods:
 
 | Method | Contract |
 |---|---|
 | `fit(train, val)` | Train on `train`; use `val` only for tuning (threshold, grid search, epoch) |
 | `predict_scores(texts)` | One score per text, **higher = more sarcastic** |
 | `size()` | e.g. `{"n_parameters": ...}` or `{"n_features": ...}` for the efficiency comparison |
-| `save(dir)` / `load(dir)` | Persist and restore the tuned model |
 
-`predict()` (shared) thresholds the scores at `self.threshold`. `src/run.py` works with any
-registered model:
+The base class provides the rest:
+
+| Method | What it does |
+|---|---|
+| `predict(texts)` | Thresholds the scores at `self.threshold` |
+| `report()` | Extra details stored with the results (override to add best params, top features, …) |
+| `save(dir)` / `load(dir)` | Write/read `state.json`: config, seed, threshold and every attribute listed in the class's `state_attrs`. Models with weights extend both (see `TfidfLRModel`) |
+
+`src/run.py` works with any registered model:
 
 - `--split val`: builds a fresh model, fits it, saves it to `checkpoints/<model>/`, then evaluates
   it on val.

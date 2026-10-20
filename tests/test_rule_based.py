@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
-import pandas as pd
 import pytest
 
 from src.models.rule_based import CueDetector, RuleBasedModel
 from src.utils import load_config
+from tests.helpers import frame
 
 
 @pytest.fixture(scope="module")
@@ -79,17 +79,6 @@ def test_unknown_cue_weight_is_rejected(config) -> None:
     cfg = {**config, "cue_weights": {**config["cue_weights"], "sarcasm_magic": 1.0}}
     with pytest.raises(ValueError, match="sarcasm_magic"):
         RuleBasedModel(cfg, seed=0)
-
-
-def frame(texts: list[str], labels: list[int]) -> pd.DataFrame:
-    return pd.DataFrame(
-        {
-            "id": [str(i) for i in range(len(texts))],
-            "text": texts,
-            "label": labels,
-            "rephrase": [""] * len(texts),
-        }
-    )
 
 
 @pytest.fixture

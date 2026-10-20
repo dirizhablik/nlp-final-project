@@ -18,19 +18,9 @@ from src.data import (
     text_key,
 )
 from src.utils import load_config
+from tests.helpers import frame
 
 ALL_ON = {"unescape_html": True, "mask_urls": True, "mask_mentions": True}
-
-
-def frame(texts: list[str | None], labels: list[int], rephrases: list[str] | None = None):
-    return pd.DataFrame(
-        {
-            "id": [f"x-{i}" for i in range(len(texts))],
-            "text": texts,
-            "label": labels,
-            "rephrase": rephrases or [""] * len(texts),
-        }
-    )
 
 
 # --- cleaning ----------------------------------------------------------------

@@ -7,9 +7,7 @@ full run/evaluate pipeline end to end.
 
 from __future__ import annotations
 
-import json
 from collections.abc import Sequence
-from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -30,13 +28,3 @@ class AlwaysSarcasticModel(SarcasmModel):
 
     def size(self) -> dict[str, int]:
         return {"n_parameters": 0}
-
-    def save(self, directory: Path) -> None:
-        directory.mkdir(parents=True, exist_ok=True)
-        state = {"config": self.config, "seed": self.seed}
-        (directory / "model.json").write_text(json.dumps(state, indent=2), encoding="utf-8")
-
-    @classmethod
-    def load(cls, directory: Path) -> AlwaysSarcasticModel:
-        state = json.loads((directory / "model.json").read_text(encoding="utf-8"))
-        return cls(state["config"], seed=state["seed"])

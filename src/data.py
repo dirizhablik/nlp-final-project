@@ -87,17 +87,13 @@ def clean(df: pd.DataFrame, options: dict[str, bool]) -> tuple[pd.DataFrame, dic
     out = df[~is_blank].copy()
     report = {
         "dropped_blank": int(is_blank.sum()),
-        "texts_with_html_entities": _count_changed(out["text"], html.unescape),
+        "texts_with_html_entities": int((out["text"].map(html.unescape) != out["text"]).sum()),
         "texts_with_urls": int(out["text"].str.contains(URL_RE).sum()),
         "texts_with_mentions": int(out["text"].str.contains(MENTION_RE).sum()),
     }
     out["text"] = out["text"].map(lambda t: clean_text(t, options))
     out["rephrase"] = out["rephrase"].map(lambda t: clean_text(t, options) if t else t)
     return out.reset_index(drop=True), report
-
-
-def _count_changed(texts: pd.Series, fn: Any) -> int:
-    return int((texts.map(fn) != texts).sum())
 
 
 def text_key(texts: pd.Series) -> pd.Series:

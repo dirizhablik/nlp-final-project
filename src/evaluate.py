@@ -46,6 +46,12 @@ class Timer:
         self.seconds = time.perf_counter() - self._start
 
 
+def f1_sarcastic(y_true: np.ndarray, y_pred: np.ndarray) -> float:
+    """The primary metric: F1 of the sarcastic class (0 if nothing is predicted sarcastic)."""
+    y_true, y_pred = np.asarray(y_true, dtype=int), np.asarray(y_pred, dtype=int)
+    return float(f1_score(y_true, y_pred, pos_label=1, average="binary", zero_division=0))
+
+
 def compute_metrics(y_true: np.ndarray, y_pred: np.ndarray) -> dict[str, Any]:
     """F1/precision/recall (sarcastic class), accuracy, macro-F1 and confusion matrix.
 
@@ -57,7 +63,7 @@ def compute_metrics(y_true: np.ndarray, y_pred: np.ndarray) -> dict[str, Any]:
     y_pred = np.asarray(y_pred, dtype=int)
     binary = {"pos_label": 1, "average": "binary", "zero_division": 0}
     return {
-        "f1_sarcastic": float(f1_score(y_true, y_pred, **binary)),
+        "f1_sarcastic": f1_sarcastic(y_true, y_pred),
         "precision_sarcastic": float(precision_score(y_true, y_pred, **binary)),
         "recall_sarcastic": float(recall_score(y_true, y_pred, **binary)),
         "accuracy": float(accuracy_score(y_true, y_pred)),
