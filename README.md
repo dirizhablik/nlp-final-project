@@ -18,8 +18,9 @@ with human annotators, and error analysis.
 as defined by the shared task. We also report precision, recall, accuracy and the confusion matrix.
 
 > **Status:** the scaffold, EDA notebook, data pipeline (`src/data.py`), shared evaluation
-> (`src/evaluate.py`) and the always-sarcastic baseline are done. The three models are being
-> added in follow-up PRs, and this README is updated as each one lands.
+> (`src/evaluate.py`), the always-sarcastic baseline, the rule-based model and TF-IDF + LR are
+> done. Fine-tuned RoBERTa, the experiments and the analysis scripts are still to come, and this
+> README is updated as each one lands.
 
 ## Setup
 
@@ -152,8 +153,8 @@ To add a model: subclass `SarcasmModel`, add one line to the registry, and add `
 
 ## Reproducing results
 
-The data and baseline commands work now. The other model commands start working as each model
-lands:
+Everything below works now except the RoBERTa and results-table commands, which start working
+when those land:
 
 ```bash
 python -m src.data                                # build data/processed/ splits + stats

@@ -22,6 +22,7 @@
     "n_pred_sarcastic": 1400
   },
   "seed": 42,
-  "inference_seconds": 1.391698606312275e-05,
-  "n_parameters": 0
+  "inference_seconds": 1.0999967344105244e-05,
+  "n_parameters": 0,
+  "model_report": {}
 }

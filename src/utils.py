@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import logging
-import os
 import random
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
@@ -42,7 +41,6 @@ def project_path(config: dict[str, Any], key: str) -> Path:
 
 def set_seed(seed: int) -> None:
     """Seed Python, NumPy and (if installed) PyTorch for reproducibility."""
-    os.environ["PYTHONHASHSEED"] = str(seed)
     random.seed(seed)
     np.random.seed(seed)
     try:
