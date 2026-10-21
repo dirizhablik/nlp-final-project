@@ -53,6 +53,27 @@ def test_best_params_have_the_highest_val_f1(fitted: TfidfLRModel) -> None:
     assert chosen["val_f1_sarcastic"] == best_f1
 
 
+def test_threshold_stays_fixed_without_threshold_search(fitted: TfidfLRModel) -> None:
+    assert "threshold_search" not in fitted.config
+    assert fitted.threshold == 0.5
+
+
+def test_threshold_is_tuned_on_validation_when_configured(config, toy) -> None:
+    candidates = {"min": 0.05, "max": 0.95, "step": 0.05}
+    fitted = TfidfLRModel({**config, "threshold_search": candidates}, seed=0)
+    fitted.fit(*toy)
+    chosen = next(
+        r
+        for r in fitted.grid_results
+        if (r["C"], r["class_weight"])
+        == (fitted.best_params["C"], fitted.best_params["class_weight"])
+    )
+    assert fitted.threshold == chosen["threshold"]
+    assert candidates["min"] <= fitted.threshold <= candidates["max"]
+    # 0.5 is one of the candidates, so tuning can only match or beat the fixed threshold
+    assert all(r["val_f1_sarcastic"] >= r["val_f1_sarcastic_at_0.5"] for r in fitted.grid_results)
+
+
 def test_vocabulary_comes_from_train_only(fitted: TfidfLRModel) -> None:
     vocab = fitted.pipeline.named_steps["tfidf"].vocabulary_
     assert "secretword" not in vocab  # appears only in val

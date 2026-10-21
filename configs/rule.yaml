@@ -1,6 +1,7 @@
 # Rule-based cue model. Each cue that fires adds its weight to the score; a text is
-# predicted sarcastic when score >= threshold. Weights are set by hand (not learned).
-# Only the threshold is tuned, on the validation split.
+# predicted sarcastic when score >= threshold. The lexicons below are written by hand.
+# The weights and the threshold are tuned together on the validation split (see
+# weight_search); cue_weights are only the starting point of that search.
 cue_weights:
   sentiment_contrast: 1.0
   intensifier: 1.0
@@ -9,25 +10,39 @@ cue_weights:
   punctuation: 1.0
   all_caps: 1.0
   quotes: 1.0
+  emoji: 1.0
 
 threshold_search:   # candidate thresholds tried on validation (min > 0: at least one cue)
   min: 0.25
   max: 5.0
   step: 0.25
 
+# Coordinate search: one cue at a time, try every value in `grid` (with the best
+# threshold for each) and keep the best by val F1 (sarcastic); repeat until nothing
+# changes or max_rounds. The grid is deliberately coarse because val has only 129
+# sarcastic tweets. On a tie, 0 wins (the cue is switched off), then the current weight.
+weight_search:
+  grid: [0.0, 0.5, 1.0, 2.0]
+  max_rounds: 3
+
 sentiment_contrast:
   # (a) mixed polarity: VADER finds both positive and negative sentiment in the text
   min_pos: 0.1
   min_neg: 0.1
-  # (b) a clearly positive word together with a negative situation
+  # (b) a clearly positive word together with a negative situation or a negative emoji
   min_positive_word_valence: 1.5   # VADER lexicon valence, range about -4..4
   negative_situations: [monday, mondays, traffic, homework, exam, exams, deadline, deadlines,
                         waiting, queue, stuck, late, delayed, cancelled, canceled, sick, rain,
                         raining, overtime, alarm, bills, taxes, dentist, hangover, lockdown,
                         work on a sunday, no sleep, power cut, wifi down]
+  # Annoyed/unhappy faces. 😭 and 💀 are left out: on Twitter they mostly mean laughing.
+  negative_emojis: [😒, 😩, 😫, 😤, 😡, 😠, 🤬, 😞, 😔, 😣, 😖, 😑, 🙄]
 
 intensifiers: [so, totally, absolutely, really, very, literally, such, truly, completely]
 exaggeration_words: [ever, never, always, everyone, everybody, nobody, nothing, everything,
                      best, worst, perfect, forever, million, billion]
 interjections: [oh great, yeah right, oh wow, wow, sure, thanks a lot, great job, oh joy,
                 just what i needed, how nice, big surprise, what a surprise]
+# Emojis commonly used to mark sarcasm (eye-roll, upside-down face, smirk, ...).
+# 😂 and 👏 are left out: in the training split they are not more common in sarcastic tweets.
+sarcasm_emojis: [🙄, 🙃, 😒, 😏, 🤔, 👍, 🤡, 🫠, 🥲, 😑]

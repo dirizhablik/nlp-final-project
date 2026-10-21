@@ -76,7 +76,14 @@ def main() -> None:
     preds, info["inference_seconds"] = predict_split(model, splits[args.split])
     info.update(model.size())
     info["model_report"] = model.report()
-    metrics = evaluate(args.model, args.split, preds, info, project_path(config, "results_dir"))
+    metrics = evaluate(
+        args.model,
+        args.split,
+        preds,
+        info,
+        project_path(config, "results_dir"),
+        seed=config["seed"],
+    )
     logger.info("%s on %s: F1(sarcastic)=%.4f", args.model, args.split, metrics["f1_sarcastic"])
 
 

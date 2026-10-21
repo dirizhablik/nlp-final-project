@@ -36,6 +36,10 @@ def cues(config) -> CueDetector:
         ("this is SO much fun", "all_caps"),
         ('such a "great" idea', "quotes"),
         ("such a “great” idea", "quotes"),
+        ("what is this??", "punctuation"),
+        ("love that for me 🙄", "emoji"),
+        ("thumbs up 👍🏻", "emoji"),  # skin-tone variants still match
+        ("I just love it 😒", "sentiment_contrast"),  # positive word + negative emoji
     ],
 )
 def test_cue_fires(cues: CueDetector, text: str, cue: str) -> None:
@@ -53,6 +57,10 @@ def test_masks_do_not_count_as_all_caps(cues: CueDetector) -> None:
 def test_words_match_whole_words_only(cues: CueDetector) -> None:
     # "so" is an intensifier, but "also"/"sonic" must not trigger it
     assert "intensifier" not in cues.detect("also sonic")
+
+
+def test_laughing_emoji_is_not_a_sarcasm_cue(cues: CueDetector) -> None:
+    assert "emoji" not in cues.detect("that was hilarious 😂")
 
 
 def test_positive_word_without_situation_is_not_contrast(cues: CueDetector) -> None:
@@ -101,6 +109,31 @@ def test_threshold_is_the_best_on_validation(fitted: RuleBasedModel) -> None:
     assert fitted.threshold == fitted.threshold_results[0]["threshold"]  # first max wins
 
 
+def test_weight_search_never_lowers_val_f1(fitted: RuleBasedModel) -> None:
+    f1s = [r["val_f1_sarcastic"] for r in fitted.weight_search]
+    assert f1s == sorted(f1s)
+    grid = set(fitted.config["weight_search"]["grid"])
+    assert set(fitted.weights.values()) <= grid
+
+
+def test_weight_search_switches_off_a_useless_cue(config) -> None:
+    # "really" (intensifier) is in every text, so it cannot separate the classes;
+    # "!!" (punctuation) only appears in the sarcastic ones.
+    val = frame(
+        ["really fun!!", "really great!!", "really late", "really here", "really done"],
+        [1, 1, 0, 0, 0],
+    )
+    model = RuleBasedModel(config, seed=0)
+    model.fit(val, val)
+    assert model.weights["intensifier"] == 0.0  # ties go to the smaller weight
+    assert model.weights["punctuation"] > 0
+    assert model.predict(val["text"].tolist()).tolist() == [1, 1, 0, 0, 0]
+
+
+def test_train_f1_is_reported_for_start_and_tuned_weights(fitted: RuleBasedModel) -> None:
+    assert set(fitted.train_f1_sarcastic) == {"start_weights", "tuned_weights"}
+
+
 def test_candidate_thresholds_follow_config(fitted: RuleBasedModel) -> None:
     ts = [r["threshold"] for r in fitted.threshold_results]
     assert ts[0] == 0.25 and ts[-1] == 5.0 and len(ts) == 20
@@ -111,5 +144,6 @@ def test_save_load_round_trip(fitted: RuleBasedModel, tmp_path) -> None:
     loaded = RuleBasedModel.load(tmp_path)
     texts = ["Oh great, another Monday!!", "lunch at noon"]
     assert loaded.threshold == fitted.threshold
+    assert loaded.weights == fitted.weights
     assert loaded.predict(texts).tolist() == fitted.predict(texts).tolist() == [1, 0]
     assert loaded.report() == fitted.report()

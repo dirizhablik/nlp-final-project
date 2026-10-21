@@ -8,8 +8,15 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from src.evaluate import Timer, compute_metrics, evaluate
-from src.models.baseline import AlwaysSarcasticModel
+from src.evaluate import (
+    Timer,
+    best_threshold,
+    compute_metrics,
+    evaluate,
+    f1_bootstrap_ci,
+    threshold_grid,
+)
+from src.models.baseline import AlwaysSarcasticModel, MajorityClassModel
 
 # y_true: 1 1 0 0 1 0
 # y_pred: 1 0 0 1 1 0
@@ -49,6 +56,55 @@ def test_always_sarcastic_f1_matches_formula() -> None:
     p = 200 / 1400
     assert m["f1_sarcastic"] == pytest.approx(2 * p / (1 + p))
     assert m["f1_sarcastic"] == pytest.approx(0.25)
+
+
+def test_majority_class_has_high_accuracy_but_zero_f1() -> None:
+    # The test-set class balance: 200 sarcastic, 1200 not.
+    y_true = np.array([1] * 200 + [0] * 1200)
+    preds = MajorityClassModel({}, seed=0).predict(["t"] * len(y_true))
+    m = compute_metrics(y_true, preds)
+    assert m["accuracy"] == pytest.approx(1200 / 1400)
+    assert m["f1_sarcastic"] == 0.0 and m["recall_sarcastic"] == 0.0
+
+
+def test_auc_of_perfect_and_constant_scores() -> None:
+    y_true = np.array([1, 1, 0, 0])
+    perfect = compute_metrics(y_true, y_true, scores=np.array([0.9, 0.8, 0.2, 0.1]))
+    assert perfect["roc_auc"] == 1.0 and perfect["pr_auc"] == 1.0
+    constant = compute_metrics(y_true, np.ones(4), scores=np.ones(4))
+    assert constant["roc_auc"] == 0.5
+    assert constant["pr_auc_chance"] == 0.5
+
+
+def test_auc_is_none_with_a_single_class() -> None:
+    m = compute_metrics(np.zeros(3), np.zeros(3), scores=np.array([0.1, 0.2, 0.3]))
+    assert m["roc_auc"] is None and m["pr_auc"] is None
+
+
+def test_no_scores_means_no_auc() -> None:
+    assert "roc_auc" not in compute_metrics(Y_TRUE, Y_PRED)
+
+
+def test_f1_ci_contains_estimate_and_is_reproducible() -> None:
+    rng = np.random.default_rng(1)
+    y_true = rng.integers(0, 2, 300)
+    y_pred = np.where(rng.random(300) < 0.7, y_true, 1 - y_true)  # ~70% correct
+    lo, hi = f1_bootstrap_ci(y_true, y_pred, seed=3)
+    m = compute_metrics(y_true, y_pred)
+    assert lo < m["f1_sarcastic"] < hi
+    assert f1_bootstrap_ci(y_true, y_pred, seed=3) == [lo, hi]
+
+
+def test_threshold_grid_is_inclusive_and_rounded() -> None:
+    assert threshold_grid({"min": 0.1, "max": 0.3, "step": 0.1}) == [0.1, 0.2, 0.3]
+
+
+def test_best_threshold_picks_the_lowest_of_tied_maxima() -> None:
+    y_true = np.array([1, 1, 0, 0])
+    scores = np.array([0.9, 0.8, 0.3, 0.1])
+    threshold, f1, results = best_threshold(y_true, scores, [0.2, 0.4, 0.6, 0.95])
+    assert (threshold, f1) == (0.4, 1.0)  # 0.4 and 0.6 both separate perfectly
+    assert [r["threshold"] for r in results] == [0.2, 0.4, 0.6, 0.95]
 
 
 def predictions_frame() -> pd.DataFrame:

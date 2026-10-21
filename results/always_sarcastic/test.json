@@ -3,6 +3,10 @@
   "split": "test",
   "metrics": {
     "f1_sarcastic": 0.25,
+    "f1_sarcastic_ci95": [
+      0.2222,
+      0.278
+    ],
     "precision_sarcastic": 0.14285714285714285,
     "recall_sarcastic": 1.0,
     "accuracy": 0.14285714285714285,
@@ -19,10 +23,13 @@
     ],
     "n": 1400,
     "n_true_sarcastic": 200,
-    "n_pred_sarcastic": 1400
+    "n_pred_sarcastic": 1400,
+    "roc_auc": 0.5,
+    "pr_auc": 0.14285714285714285,
+    "pr_auc_chance": 0.14285714285714285
   },
   "seed": 42,
-  "inference_seconds": 1.0999967344105244e-05,
+  "inference_seconds": 3.4589902497828007e-06,
   "n_parameters": 0,
   "model_report": {}
 }

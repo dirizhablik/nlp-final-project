@@ -4,8 +4,10 @@ Config: configs/tfidf.yaml.
 
 ``fit`` trains one model per (C, class_weight) pair on the train split and keeps
 the one with the best sarcastic-class F1 on the fixed validation split (no
-cross-validation; test is never used for selection). The chosen model stays
-trained on train only, so validation remains a clean selection set.
+cross-validation; test is never used for selection). The decision threshold on
+P(sarcastic) is fixed (``threshold``, 0.5) unless the config has a
+``threshold_search`` block, in which case it is tuned on validation per pair. The chosen
+model stays trained on train only, so validation remains a clean selection set.
 
 Tokenization is scikit-learn's default word pattern: lowercase words of 2+
 letters/digits. Punctuation, emoji and one-letter words ("I", "a") are therefore
@@ -27,7 +29,7 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import LogisticRegression
 from sklearn.pipeline import Pipeline
 
-from src.evaluate import Timer, f1_sarcastic
+from src.evaluate import Timer, best_threshold, f1_sarcastic, threshold_grid
 from src.models.base import SarcasmModel
 
 logger = logging.getLogger(__name__)
@@ -50,28 +52,42 @@ class TfidfLRModel(SarcasmModel):
     # --- training ------------------------------------------------------------
 
     def fit(self, train: pd.DataFrame, val: pd.DataFrame) -> None:
-        """Grid-search C x class_weight; select by validation F1 (sarcastic)."""
+        """Grid-search C x class_weight (x threshold if configured); select by val F1."""
         grid = self.config["grid"]
+        search = self.config.get("threshold_search")
+        candidates = threshold_grid(search) if search else [self.threshold]
+        y_val = val["label"].to_numpy()
         best: tuple[float, Pipeline] | None = None
         self.grid_results = []
         for c, class_weight in product(grid["C"], grid["class_weight"]):
             pipeline, seconds = self._fit_one(train, c, class_weight)
-            val_pred = pipeline.predict_proba(val["text"].tolist())[:, 1] >= self.threshold
-            f1 = f1_sarcastic(val["label"].to_numpy(), val_pred)
+            val_scores = pipeline.predict_proba(val["text"].tolist())[:, 1]
+            threshold, f1, _ = best_threshold(y_val, val_scores, candidates)
             self.grid_results.append(
                 {
                     "C": c,
                     "class_weight": class_weight,
+                    "threshold": threshold,
                     "val_f1_sarcastic": f1,
+                    "val_f1_sarcastic_at_0.5": f1_sarcastic(y_val, val_scores >= 0.5),
                     "fit_seconds": seconds,
                 }
             )
-            logger.info("C=%-6g class_weight=%-8s val F1=%.4f", c, class_weight, f1)
+            logger.info(
+                "C=%-6g class_weight=%-8s threshold=%.2f val F1=%.4f",
+                c,
+                class_weight,
+                threshold,
+                f1,
+            )
             if best is None or f1 > best[0]:  # strict '>' keeps the first (smallest C) on ties
                 best = (f1, pipeline)
                 self.best_params = {"C": c, "class_weight": class_weight}
+                self.threshold = threshold
         self.pipeline = best[1]
-        logger.info("best: %s (val F1=%.4f)", self.best_params, best[0])
+        logger.info(
+            "best: %s, threshold %.2f (val F1=%.4f)", self.best_params, self.threshold, best[0]
+        )
 
     def _fit_one(
         self, train: pd.DataFrame, c: float, class_weight: str | None

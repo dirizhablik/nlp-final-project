@@ -1,0 +1,36 @@
+{
+  "model": "majority",
+  "split": "val",
+  "metrics": {
+    "f1_sarcastic": 0.0,
+    "f1_sarcastic_ci95": [
+      0.0,
+      0.0
+    ],
+    "precision_sarcastic": 0.0,
+    "recall_sarcastic": 0.0,
+    "accuracy": 0.750965250965251,
+    "f1_macro": 0.4288864388092613,
+    "confusion_matrix": [
+      [
+        389,
+        0
+      ],
+      [
+        129,
+        0
+      ]
+    ],
+    "n": 518,
+    "n_true_sarcastic": 129,
+    "n_pred_sarcastic": 0,
+    "roc_auc": 0.5,
+    "pr_auc": 0.24903474903474904,
+    "pr_auc_chance": 0.24903474903474904
+  },
+  "seed": 42,
+  "train_seconds": 1.292035449296236e-06,
+  "inference_seconds": 1.6249832697212696e-06,
+  "n_parameters": 0,
+  "model_report": {}
+}

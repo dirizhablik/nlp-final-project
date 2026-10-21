@@ -7,7 +7,7 @@ sarcasm or mostly learn surface cues.
 
 The three approaches:
 
-1. A rule-based cue model (VADER sentiment contrast, intensifiers, punctuation, …)
+1. A rule-based cue model (VADER sentiment contrast, intensifiers, punctuation, emoji, …)
 2. TF-IDF + Logistic Regression
 3. Fine-tuned `roberta-base`
 
@@ -18,8 +18,8 @@ with human annotators, and error analysis.
 as defined by the shared task. We also report precision, recall, accuracy and the confusion matrix.
 
 > **Status:** the scaffold, EDA notebook, data pipeline (`src/data.py`), shared evaluation
-> (`src/evaluate.py`), the always-sarcastic baseline, the rule-based model and TF-IDF + LR are
-> done. Fine-tuned RoBERTa, the experiments and the analysis scripts are still to come, and this
+> (`src/evaluate.py`), the majority-class and always-sarcastic baselines, the rule-based model
+> and TF-IDF + LR are done. Fine-tuned RoBERTa, the experiments and the analysis scripts are still to come, and this
 > README is updated as each one lands.
 
 ## Setup
@@ -105,8 +105,8 @@ has the same split.
 | Path | What it is |
 |---|---|
 | `src/models/base.py` | `SarcasmModel` abstract base class: the interface every model implements |
-| `src/models/baseline.py` + `configs/always_sarcastic.yaml` | Always-sarcastic reference baseline |
-| `src/models/__init__.py` | Model registry (`rule`, `tfidf`, `roberta`), lazily imported |
+| `src/models/baseline.py` + `configs/{majority,always_sarcastic}.yaml` | Reference baselines: majority class (always non-sarcastic) and always sarcastic |
+| `src/models/__init__.py` | Model registry (`majority`, `always_sarcastic`, `rule`, `tfidf`, `roberta`), lazily imported |
 | `src/models/rule_based.py` + `configs/rule.yaml` | Rule-based cue model |
 | `src/models/tfidf_lr.py` + `configs/tfidf.yaml` | TF-IDF + Logistic Regression |
 | `src/models/roberta.py` + `configs/roberta.yaml` | Fine-tuned roberta-base |
@@ -158,6 +158,8 @@ when those land:
 
 ```bash
 python -m src.data                                # build data/processed/ splits + stats
+python -m src.run --model majority --split val
+python -m src.run --model majority --split test
 python -m src.run --model always_sarcastic --split val
 python -m src.run --model always_sarcastic --split test
 python -m src.run --model rule   --split val
@@ -168,19 +170,38 @@ python -m src.analysis.results_table
 ```
 
 Each run writes two files to `results/<model>/`:
-- `<split>.json` holds the metrics (F1, precision and recall for the sarcastic class, accuracy,
-  macro-F1, the confusion matrix as `[[TN, FP], [FN, TP]]`), timings and model size.
+- `<split>.json` holds the metrics (F1 with a bootstrap 95% CI, precision and recall for the
+  sarcastic class, accuracy, macro-F1, ROC-AUC, PR-AUC, the confusion matrix as
+  `[[TN, FP], [FN, TP]]`), timings and model size.
 - `<split>_predictions.csv` holds one row per text: `id, text, label, pred, score`.
 
-| Reference point | val F1 (sarcastic) | test F1 (sarcastic) |
-|---|---|---|
-| Always predict sarcastic | 0.3988 | 0.2500 |
-| Rule-based cues (sarcastic if at least 1 cue fires; preliminary) | 0.3518 | 0.2985 |
-| TF-IDF + LR (C=1, balanced; preliminary) | 0.3602 | 0.2853 |
-| Human majority vote (from the EDA notebook) | – | 0.6133 |
+Test-set results (official test, 1,400 tweets, 14.3% sarcastic):
 
-The baseline scores higher on val than on test only because val has more sarcastic tweets
-(24.9% vs 14.3%). So compare models on the same split, never val against test.
+| Model | val F1 (sarc.) | test F1 (sarc.) | test F1 95% CI | test precision | test recall | test accuracy | test ROC-AUC |
+|---|---|---|---|---|---|---|---|
+| Majority class (always non-sarcastic) | 0.000 | 0.000 | – | 0.000 | 0.000 | 0.857 | 0.500 |
+| Always sarcastic | 0.399 | 0.250 | [0.222, 0.278] | 0.143 | 1.000 | 0.143 | 0.500 |
+| Rule-based cues (weights + threshold tuned on val) | 0.370 | 0.300 | [0.262, 0.338] | 0.191 | 0.695 | 0.537 | 0.654 |
+| TF-IDF + LR (C=1, balanced, threshold 0.5) | 0.360 | 0.285 | [0.239, 0.329] | 0.211 | 0.440 | 0.685 | 0.620 |
+| Human majority vote (from the EDA notebook) | – | 0.613 | – | – | – | – | – |
+
+Each `results/<model>/<split>.json` also has PR-AUC and its chance level (the share of
+sarcastic texts). The F1 CI is a 1,000-resample bootstrap over test texts, seeded from
+`configs/base.yaml`. The rule-based and TF-IDF intervals overlap, so neither model is
+clearly better yet.
+
+Sarcastic F1 depends on how common sarcasm is in a split. The always-sarcastic baseline gets
+2p / (1 + p) for a sarcastic share p: 0.25 on test, 0.40 on val, 0.67 on a 50/50 set. So compare
+models on the same split, never val against test. ROC-AUC does not depend on the class mix (0.5
+is chance), so it is the fairer number for comparing ranking quality across splits.
+
+We keep the splits as they are. Train and val are stratified at the training file's 25%. The
+official test set is not resampled: that keeps it comparable with the shared task and with human
+performance. The difference in class mix still matters for tuning. On val, flagging almost
+everything already gives F1 0.40, so a threshold tuned for val F1 flags too much on test. Tuning
+TF-IDF's threshold on val (it picked 0.40) raised val F1 to 0.443 but lowered test F1 to 0.272.
+So TF-IDF keeps a fixed 0.5 threshold, and `class_weight="balanced"` handles the imbalance (see
+`configs/tfidf.yaml` to rerun that ablation).
 
 ### Experimental protocol
 

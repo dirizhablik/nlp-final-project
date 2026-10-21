@@ -3,6 +3,10 @@
   "split": "val",
   "metrics": {
     "f1_sarcastic": 0.3987635239567233,
+    "f1_sarcastic_ci95": [
+      0.3503,
+      0.4444
+    ],
     "precision_sarcastic": 0.24903474903474904,
     "recall_sarcastic": 1.0,
     "accuracy": 0.24903474903474904,
@@ -19,11 +23,14 @@
     ],
     "n": 518,
     "n_true_sarcastic": 129,
-    "n_pred_sarcastic": 518
+    "n_pred_sarcastic": 518,
+    "roc_auc": 0.5,
+    "pr_auc": 0.24903474903474904,
+    "pr_auc_chance": 0.24903474903474904
   },
   "seed": 42,
-  "train_seconds": 1.7919810488820076e-06,
-  "inference_seconds": 1.4999997802078724e-05,
+  "train_seconds": 5.00003807246685e-07,
+  "inference_seconds": 3.2910029403865337e-06,
   "n_parameters": 0,
   "model_report": {}
 }

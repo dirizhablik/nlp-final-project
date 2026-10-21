@@ -10,6 +10,11 @@ grid:
   C: [0.01, 0.1, 1.0, 10.0, 100.0]   # inverse regularization strength (L2)
   class_weight: [null, balanced]     # null = no reweighting
 
-threshold: 0.5        # fixed decision threshold on P(sarcastic); not tuned
+# Fixed decision threshold on P(sarcastic). class_weight="balanced" already corrects
+# for the imbalance. Tuning it for val F1 picked 0.40, which flags most tweets because
+# val is 25% sarcastic, and that does not transfer to test (14%). To rerun that
+# ablation, add:  threshold_search: {min: 0.05, max: 0.95, step: 0.05}
+threshold: 0.5
+
 max_iter: 2000
 top_k_features: 20
